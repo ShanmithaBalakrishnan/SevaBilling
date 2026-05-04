@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BillFlow — Universal Billing System</title>
+<style>
+:root{--bg:#F7F6F2;--surface:#FFFFFF;--surface2:#F1EFE8;--border:rgba(0,0,0,0.08);--border-md:rgba(0,0,0,0.14);--text:#1a1a18;--text2:#5F5E5A;--text3:#888780;--accent:#185FA5;--accent-bg:#E6F1FB;--accent-text:#0C447C;--green:#3B6D11;--green-bg:#EAF3DE;--amber:#854F0B;--amber-bg:#FAEEDA;--red:#A32D2D;--red-bg:#FCEBEB;--radius:10px;--radius-sm:7px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.content{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.brand{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.brand h1{font-size:18px;font-weight:700;letter-spacing:-0.5px;color:var(--text)}
+.brand p{font-size:11px;color:var(--text3);margin-top:2px}
+.shop-selector{padding:12px;border-bottom:1px solid var(--border)}
+.shop-selector label{font-size:11px;color:var(--text3);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.shop-selector select{width:100%;padding:7px 10px;border:1px solid var(--border-md);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:13px}
+.nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);color:var(--text2);font-size:13px;border:none;background:transparent;width:100%;text-align:left;transition:all .12s}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent-text);font-weight:500}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.nav-sep{height:1px;background:var(--border);margin:6px 0}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+.add-shop-btn{width:100%;padding:8px;border-radius:var(--radius-sm);border:1px dashed var(--border-md);background:transparent;color:var(--text2);font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.add-shop-btn:hover{border-color:var(--accent);color:var(--accent)}
+.page-header{padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.page-header h2{font-size:17px;font-weight:600;color:var(--text)}
+.page-header p{font-size:12px;color:var(--text3);margin-top:2px}
+.header-actions{display:flex;gap:8px;align-items:center}
+.btn{padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;border:none;transition:all .12s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{opacity:.9}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border-md)}
+.btn-secondary:hover{background:var(--border)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid rgba(163,45,45,.2)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(59,109,17,.2)}
+.btn-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);border:1px solid var(--border-md);background:transparent;font-size:16px;color:var(--text2);cursor:pointer}
+.btn-icon:hover{background:var(--surface2)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-blue{background:var(--accent-bg);color:var(--accent-text)}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-gray{background:var(--surface2);color:var(--text2)}
+.page-body{flex:1;padding:20px 24px}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:16px}
+.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.metric-val{font-size:26px;font-weight:700;color:var(--text)}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{text-align:left;padding:10px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);background:var(--surface2);border-bottom:1px solid var(--border)}
+.data-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text);font-size:13px}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--surface2)}
+.table-wrap{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.form-input{width:100%;padding:8px 10px;border:1px solid var(--border-md);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px;outline:none;transition:border .12s}
+.form-input:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal{background:var(--surface);border-radius:var(--radius);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:15px;font-weight:600}
+.modal-body{padding:20px}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.billing-layout{display:flex;gap:0;height:calc(100vh - 57px);overflow:hidden}
+.billing-left{flex:1;display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.billing-right{width:320px;background:var(--surface);display:flex;flex-direction:column;flex-shrink:0}
+.cat-bar{display:flex;gap:0;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px}
+.cat-pill{padding:10px 14px;font-size:12px;font-weight:500;border:none;background:transparent;color:var(--text2);white-space:nowrap;border-bottom:2px solid transparent;cursor:pointer;transition:all .12s}
+.cat-pill.active{color:var(--accent);border-bottom-color:var(--accent)}
+.products-grid{flex:1;overflow-y:auto;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;align-content:start}
+.prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;cursor:pointer;transition:all .12s;text-align:left;width:100%}
+.prod-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(24,95,165,.1)}
+.prod-card.low-stock{border-color:rgba(133,79,11,.3)}
+.prod-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.3}
+.prod-price{font-size:14px;font-weight:700;color:var(--accent)}
+.prod-stock{font-size:11px;color:var(--text3);margin-top:4px}
+.cart-head{padding:14px 16px;border-bottom:1px solid var(--border)}
+.cart-head h3{font-size:14px;font-weight:600}
+.cart-customer{padding:10px 12px;border-bottom:1px solid var(--border)}
+.cart-items{flex:1;overflow-y:auto;padding:10px 12px}
+.cart-empty{padding:30px;text-align:center;color:var(--text3);font-size:13px}
+.cart-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.cart-row:last-child{border-bottom:none}
+.cart-name{flex:1;font-size:12px;color:var(--text);line-height:1.3}
+.qty-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.qty-btn{width:22px;height:22px;border-radius:50%;border:1px solid var(--border-md);background:transparent;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.qty-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.qty-num{font-size:12px;font-weight:600;min-width:18px;text-align:center}
+.cart-price{font-size:12px;font-weight:600;min-width:50px;text-align:right;color:var(--text)}
+.cart-summary{padding:12px;border-top:1px solid var(--border);background:var(--surface2)}
+.sum-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px}
+.sum-total{display:flex;justify-content:space-between;font-size:16px;font-weight:700;margin:8px 0;padding-top:8px;border-top:1px solid var(--border-md)}
+.cart-actions{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.tables-grid-inner{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;padding:10px}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;transition:all .12s}
+.table-card:hover{border-color:var(--accent)}
+.table-card.occupied{border-color:var(--green);background:var(--green-bg)}
+.table-card.occupied .t-num{color:var(--green)}
+.table-card.selected{border-color:var(--accent);background:var(--accent-bg)}
+.table-card.selected .t-num{color:var(--accent)}
+.t-num{font-size:18px;font-weight:700}
+.t-label{font-size:10px;color:var(--text3);margin-top:2px}
+.t-amt{font-size:11px;font-weight:600;color:var(--green);margin-top:3px}
+.khata-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.khata-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.stock-bar{height:5px;border-radius:3px;background:var(--border);margin-top:5px;overflow:hidden}
+.stock-fill{height:100%;border-radius:3px;background:var(--green)}
+.stock-fill.warn{background:#EF9F27}
+.stock-fill.crit{background:#E24B4A}
+.receipt{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:340px;margin:0 auto;font-size:13px}
+.receipt-header{text-align:center;margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed var(--border-md)}
+.receipt-shop{font-size:17px;font-weight:700}
+.receipt-footer{border-top:1px dashed var(--border-md);margin-top:12px;padding-top:12px;text-align:center;color:var(--text3);font-size:11px}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
+.setup-screen{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+.setup-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:32px;width:100%;max-width:520px}
+.setup-card h2{font-size:20px;font-weight:700;margin-bottom:4px}
+.setup-card p{font-size:13px;color:var(--text2);margin-bottom:24px}
+.shop-type-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.shop-type-opt{border:1px solid var(--border-md);border-radius:var(--radius);padding:12px 8px;cursor:pointer;transition:all .12s;text-align:center}
+.shop-type-opt:hover{border-color:var(--accent)}
+.shop-type-opt.selected{border-color:var(--accent);background:var(--accent-bg)}
+.shop-type-opt .sicon{font-size:24px;margin-bottom:4px}
+.shop-type-opt .slabel{font-size:12px;font-weight:500}
+.shop-type-opt .sdesc{font-size:10px;color:var(--text3);margin-top:2px}
+@media print{.sidebar,.cart-actions,.modal-foot button:first-child,.btn-icon{display:none!important}.receipt{border:none;box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+// ═══════════════════════════════════════════════════════
+// BILLFLOW — Universal Small Business Billing System
+// Version: 1.0.0  |  Pure HTML/CSS/JS, no dependencies
+// ═══════════════════════════════════════════════════════
+
+// ── STATE ────────────────────────────────────────────
+let state={shops:[],currentShop:null,currentPage:'dashboard',cart:[],selectedTable:null,activeCat:null,modal:null,bills:[],khataEntries:[]};
+
+const SHOP_TEMPLATES={
+  restaurant:{label:'Restaurant / Cafe',icon:'🍽️',mode:'table',desc:'Table-based ordering',defaultCats:['Starters','Mains','Breads','Beverages','Desserts'],gst:5},
+  cafe:{label:'Tea / Coffee Shop',icon:'☕',mode:'counter',desc:'Quick counter billing',defaultCats:['Hot Drinks','Cold Drinks','Snacks','Bakery'],gst:5},
+  hardware:{label:'Hardware Store',icon:'🔧',mode:'counter',desc:'Product-based billing',defaultCats:['Pipes','Fittings','Electrical','Tools','Paint'],gst:12},
+  grocery:{label:'Malligai / Grocery',icon:'🛒',mode:'counter',desc:'Daily groceries billing',defaultCats:['Vegetables','Fruits','Staples','Dairy','Spices'],gst:0},
+  petty:{label:'Petty Shop',icon:'🏪',mode:'counter',desc:'General store billing',defaultCats:['Snacks','Beverages','Stationery','Personal Care','Misc'],gst:0},
+  custom:{label:'Custom Shop',icon:'⚙️',mode:'counter',desc:'Define your own setup',defaultCats:['General'],gst:0}
+};
+
+// ── UTILS ─────────────────────────────────────────────
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.opacity=1;setTimeout(()=>el.style.opacity=0,2200)}
+function uid(){return Math.random().toString(36).slice(2,9)}
+function fmt(n){return '₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function shop(){return state.shops.find(s=>s.id===state.currentShop)}
+function cats(){return shop()?[...new Set(shop().products.map(p=>p.cat))]:[]}
+function cartSubtotal(){return state.cart.reduce((s,i)=>s+i.price*i.qty,0)}
+function cartGST(){return Math.round(cartSubtotal()*(shop()?.gst||0)/100*100)/100}
+function cartTotal(){return cartSubtotal()+cartGST()}
+function saveState(){try{localStorage.setItem('billflow_state',JSON.stringify(state))}catch(e){}}
+function loadState(){try{const s=localStorage.getItem('billflow_state');if(s){const parsed=JSON.parse(s);state={...state,...parsed}}}catch(e){}}
+
+// ── ACTIONS ───────────────────────────────────────────
+function addToCart(prod){
+  const ex=state.cart.find(x=>x.id===prod.id);
+  if(ex)ex.qty++;else state.cart.push({...prod,qty:1});
+  saveState();render();
+}
+function changeCartQty(id,d){
+  const ex=state.cart.find(x=>x.id===id);
+  if(!ex)return;
+  ex.qty+=d;
+  if(ex.qty<=0)state.cart=state.cart.filter(x=>x.id!==id);
+  saveState();render();
+}
+function clearCart(){state.cart=[];state.selectedTable=null;saveState();render()}
+
+function settleBill(payMode='cash'){
+  if(!state.cart.length){toast('Cart is empty');return}
+  const s=shop();
+  const bill={id:uid(),shop:s.id,shopName:s.name,items:state.cart.map(x=>({...x})),subtotal:cartSubtotal(),gst:cartGST(),total:cartTotal(),payMode,table:state.selectedTable,time:new Date().toISOString()};
+  state.bills.push(bill);
+  if(s.mode==='table'&&state.selectedTable!=null){s.tables[state.selectedTable].status='free';s.tables[state.selectedTable].order=[]}
+  state.cart.forEach(ci=>{const p=s.products.find(p=>p.id===ci.id);if(p&&p.stock!=null)p.stock=Math.max(0,p.stock-ci.qty)});
+  state.cart=[];state.selectedTable=null;
+  state.modal={type:'receipt',bill};
+  saveState();render();toast('Bill settled!');
+}
+
+function addProduct(data){
+  const s=shop();
+  s.products.push({id:uid(),name:data.name,price:parseFloat(data.price),cat:data.cat||'General',stock:data.stock?parseInt(data.stock):null,unit:data.unit||'pcs'});
+  if(!s.cats.includes(data.cat))s.cats.push(data.cat);
+  saveState();render();toast('Product added');
+}
+function deleteProduct(id){const s=shop();s.products=s.products.filter(p=>p.id!==id);saveState();render();toast('Product removed')}
+
+function addShop(data){
+  const tmpl=SHOP_TEMPLATES[data.type];
+  const s={id:uid(),name:data.name,type:data.type,mode:data.mode||tmpl.mode,gst:parseFloat(data.gst??tmpl.gst),products:[],tables:data.mode==='table'?Array.from({length:parseInt(data.tables||8)},(_,i)=>({num:i+1,status:'free',order:[]})):[],cats:[...tmpl.defaultCats]};
+  state.shops.push(s);state.currentShop=s.id;state.currentPage='billing';state.modal=null;
+  saveState();render();toast('Shop created!');
+}
+
+function addKhata(data){
+  state.khataEntries.push({id:uid(),shop:state.currentShop,name:data.name,phone:data.phone,amount:parseFloat(data.amount),note:data.note,date:new Date().toISOString(),paid:false});
+  state.modal=null;saveState();render();toast('Khata entry added');
+}
+function markKhataPaid(id){const k=state.khataEntries.find(x=>x.id===id);if(k){k.paid=true;saveState();render();toast('Marked as paid')}}
+
+// ── RENDER ────────────────────────────────────────────
+function render(){
+  const app=document.getElementById('app');
+  if(!state.shops.length){app.innerHTML=renderSetup();bindSetup();return}
+  app.innerHTML=`${renderSidebar()}<div class="content">${renderMain()}</div>`;
+  bindNav();
+  document.querySelectorAll('.modal-overlay').forEach(e=>e.remove());
+  if(state.modal)renderModal();
+}
+
+// ── SETUP ─────────────────────────────────────────────
+function renderSetup(){
+  return`<div class="setup-screen"><div class="setup-card">
+    <h2>Welcome to BillFlow</h2>
+    <p>Set up your first shop to get started. You can add more shops later.</p>
+    ${renderShopFormInner(true)}
+  </div></div>`;
+}
+
+function renderShopFormInner(isFirst=false){
+  const opts=Object.entries(SHOP_TEMPLATES).map(([k,v])=>`<div class="shop-type-opt" data-type="${k}" onclick="selectShopType(this,'${k}')"><div class="sicon">${v.icon}</div><div class="slabel">${v.label}</div><div class="sdesc">${v.desc}</div></div>`).join('');
+  return`<div id="shop-form">
+    <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px">Select shop type</div>
+    <div class="shop-type-grid">${opts}</div>
+    <div class="form-group"><label class="form-label">Shop Name</label><input class="form-input" id="sf-name" placeholder="e.g. Murugan Stores"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">GST %</label><input class="form-input" id="sf-gst" type="number" value="0" min="0" max="28"></div>
+      <div class="form-group" id="sf-tables-wrap" style="display:none"><label class="form-label">No. of Tables</label><input class="form-input" id="sf-tables" type="number" value="8" min="1" max="50"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Billing Mode</label>
+      <select class="form-input" id="sf-mode" onchange="document.getElementById('sf-tables-wrap').style.display=this.value==='table'?'':'none'">
+        <option value="counter">Counter (walk-in)</option><option value="table">Table-based</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      ${!isFirst?'<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>':''}
+      <button class="btn btn-primary" onclick="submitShopForm()">Create Shop →</button>
+    </div>
+  </div>`;
+}
+
+function bindSetup(){
+  // mode handled inline via onchange
+}
+
+let _selType=null;
+function selectShopType(el,type){
+  document.querySelectorAll('.shop-type-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');_selType=type;
+  const t=SHOP_TEMPLATES[type];
+  const g=document.getElementById('sf-gst');const m=document.getElementById('sf-mode');
+  if(g)g.value=t.gst;
+  if(m){m.value=t.mode;const tw=document.getElementById('sf-tables-wrap');if(tw)tw.style.display=t.mode==='table'?'':'none'}
+}
+
+function submitShopForm(){
+  const name=document.getElementById('sf-name')?.value.trim();
+  if(!name){toast('Enter a shop name');return}
+  if(!_selType){toast('Select a shop type');return}
+  const mode=document.getElementById('sf-mode')?.value||SHOP_TEMPLATES[_selType].mode;
+  addShop({name,type:_selType,mode,gst:document.getElementById('sf-gst')?.value||0,tables:document.getElementById('sf-tables')?.value||8});
+  _selType=null;
+}
+
+// ── SIDEBAR ───────────────────────────────────────────
+function renderSidebar(){
+  const pages=[{id:'dashboard',icon:'📊',label:'Dashboard'},{id:'billing',icon:'🧾',label:'Billing'},{id:'inventory',icon:'📦',label:'Products'},{id:'khata',icon:'📒',label:'Khata / Credit'},{id:'bills',icon:'📋',label:'Bill History'},{id:'settings',icon:'⚙️',label:'Settings'}];
+  const shopOpts=state.shops.map(sh=>`<option value="${sh.id}" ${sh.id===state.currentShop?'selected':''}>${sh.name}</option>`).join('');
+  return`<div class="sidebar">
+    <div class="brand"><h1>BillFlow</h1><p>Universal Billing System</p></div>
+    <div class="shop-selector"><label>Active Shop</label><select onchange="switchShop(this.value)">${shopOpts}</select></div>
+    <nav class="nav">
+      ${pages.map(p=>`<button class="nav-item ${state.currentPage===p.id?'active':''}" data-page="${p.id}"><span class="icon">${p.icon}</span>${p.label}</button>`).join('')}
+    </nav>
+    <div class="sidebar-footer"><button class="add-shop-btn" onclick="showAddShop()">+ Add New Shop</button></div>
+  </div>`;
+}
+
+// ── MAIN ROUTER ───────────────────────────────────────
+function renderMain(){
+  const map={dashboard:renderDashboard,billing:renderBillingPage,inventory:renderInventory,khata:renderKhata,bills:renderBillHistory,settings:renderSettings};
+  return(map[state.currentPage]||renderDashboard)();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDashboard(){
+  const s=shop();
+  const today=new Date().toISOString().slice(0,10);
+  const todayBills=state.bills.filter(b=>b.shop===s.id&&b.time.startsWith(today));
+  const totalRev=todayBills.reduce((sum,b)=>sum+b.total,0);
+  const khataOwed=state.khataEntries.filter(k=>k.shop===s.id&&!k.paid).reduce((sum,k)=>sum+k.amount,0);
+  const lowStock=s.products.filter(p=>p.stock!=null&&p.stock<=5);
+  const activeTables=s.mode==='table'?s.tables.filter(t=>t.status==='occupied').length:0;
+  const topItems={};
+  todayBills.forEach(b=>b.items.forEach(i=>{topItems[i.name]=(topItems[i.name]||0)+i.qty}));
+  const topList=Object.entries(topItems).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const m4=s.mode==='table'
+    ?`<div class="metric-card"><div class="metric-label">Active Tables</div><div class="metric-val" style="color:var(--green)">${activeTables}</div><div class="metric-sub">of ${s.tables.length} total</div></div>`
+    :`<div class="metric-card"><div class="metric-label">Total Products</div><div class="metric-val">${s.products.length}</div><div class="metric-sub">in catalog</div></div>`;
+  return`<div class="page-header"><div><h2>${s.name}</h2><p>${SHOP_TEMPLATES[s.type]?.label||s.type} · ${s.mode==='table'?'Table Mode':'Counter Mode'} · GST ${s.gst}%</p></div><div class="header-actions"><span class="badge badge-blue">${s.mode==='table'?'Table':'Counter'}</span></div></div>
+  <div class="page-body">
+    <div class="metrics-grid">
+      <div class="metric-card"><div class="metric-label">Revenue Today</div><div class="metric-val">${fmt(totalRev)}</div><div class="metric-sub">${todayBills.length} bills settled</div></div>
+      <div class="metric-card"><div class="metric-label">Khata Pending</div><div class="metric-val" style="color:var(--red)">${fmt(khataOwed)}</div><div class="metric-sub">${state.khataEntries.filter(k=>k.shop===s.id&&!k.paid).length} customers</div></div>
+      <div class="metric-card"><div class="metric-label">Low Stock Items</div><div class="metric-val" style="color:var(--amber)">${lowStock.length}</div><div class="metric-sub">need restock</div></div>
+      ${m4}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="table-wrap">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">Top Items Today</div>
+        ${topList.length?`<table class="data-table"><thead><tr><th>Item</th><th>Qty Sold</th></tr></thead><tbody>${topList.map(([n,q])=>`<tr><td>${n}</td><td style="font-weight:600">${q}</td></tr>`).join('')}</tbody></table>`:'<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px">No sales yet today. Start billing!</div>'}
+      </div>
+      <div class="table-wrap">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">Recent Bills</div>
+        ${todayBills.length?`<table class="data-table"><thead><tr><th>Bill #</th><th>Amount</th><th>Mode</th></tr></thead><tbody>${todayBills.slice(-5).reverse().map(b=>`<tr><td style="font-family:monospace;font-size:12px">#${b.id.slice(0,6).toUpperCase()}</td><td style="font-weight:600">${fmt(b.total)}</td><td><span class="badge badge-gray">${b.payMode}</span></td></tr>`).join('')}</tbody></table>`:'<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px">No bills yet today</div>'}
+      </div>
+    </div>
+    ${lowStock.length?`<div style="margin-top:16px;background:var(--amber-bg);border:1px solid rgba(133,79,11,.2);border-radius:var(--radius);padding:14px"><div style="font-size:13px;font-weight:600;color:var(--amber);margin-bottom:8px">⚠ Low Stock Alert</div><div style="display:flex;flex-wrap:wrap;gap:6px">${lowStock.map(p=>`<span class="badge badge-amber">${p.name} (${p.stock} left)</span>`).join('')}</div></div>`:''}
+  </div>`;
+}
+
+// ── BILLING ───────────────────────────────────────────
+function renderBillingPage(){const s=shop();return s.mode==='table'?renderTableBilling(s):renderCounterBilling(s)}
+
+function renderCounterBilling(s){
+  const ac=state.activeCat||cats()[0];
+  const fp=s.products.filter(p=>p.cat===ac);
+  return`<div class="billing-layout">
+    <div class="billing-left">
+      <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:14px;font-weight:600">Counter Billing</span><button class="btn btn-sm btn-secondary" onclick="showAddProduct()">+ Add Product</button></div>
+      <div class="cat-bar">${cats().map(c=>`<button class="cat-pill ${c===ac?'active':''}" onclick="selectCat('${c}')">${c}</button>`).join('')}</div>
+      <div class="products-grid">${fp.length?fp.map(p=>prodCard(p)).join(''):'<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--text3)">No products in this category.<br><button class="btn btn-sm btn-primary" style="margin-top:12px" onclick="showAddProduct()">Add Product</button></div>'}</div>
+    </div>
+    ${renderCart()}
+  </div>`;
+}
+
+function renderTableBilling(s){
+  const ac=state.activeCat||cats()[0];
+  const fp=s.products.filter(p=>p.cat===ac);
+  const selT=state.selectedTable;
+  return`<div class="billing-layout">
+    <div class="billing-left" style="flex-direction:row;flex-wrap:nowrap;overflow:hidden">
+      <div style="width:160px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto">
+        <div style="padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:600">Tables</span><span class="badge badge-green" style="font-size:10px">${s.tables.filter(t=>t.status==='occupied').length} active</span></div>
+        <div class="tables-grid-inner">${s.tables.map((t,i)=>`<div class="table-card ${t.status==='occupied'?'occupied':''} ${selT===i?'selected':''}" onclick="selectTable(${i})"><div class="t-num">${t.num}</div><div class="t-label">${t.status==='occupied'?'Active':'Free'}</div>${t.status==='occupied'?`<div class="t-amt">${fmt(t.order.reduce((s,x)=>s+x.price*x.qty,0))}</div>`:''}</div>`).join('')}</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:14px;font-weight:600">${selT!=null?`Table ${s.tables[selT].num}`:'Select a table'}</span><button class="btn btn-sm btn-secondary" onclick="showAddProduct()">+ Add Product</button></div>
+        <div class="cat-bar">${cats().map(c=>`<button class="cat-pill ${c===ac?'active':''}" onclick="selectCat('${c}')">${c}</button>`).join('')}</div>
+        <div class="products-grid">${selT!=null?(fp.length?fp.map(p=>prodCard(p)).join(''):'<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--text3)">No products in this category.</div>'):'<div style="grid-column:1/-1;padding:60px;text-align:center;color:var(--text3);font-size:14px">👆 Select a table to start billing</div>'}</div>
+      </div>
+    </div>
+    ${renderCart()}
+  </div>`;
+}
+
+function prodCard(p){
+  const d=JSON.stringify(p).replace(/"/g,'&quot;');
+  return`<button class="prod-card ${p.stock!=null&&p.stock<=5?'low-stock':''}" onclick='addToCart(${JSON.stringify(p)})'><div class="prod-name">${p.name}</div><div class="prod-price">${fmt(p.price)}</div>${p.stock!=null?`<div class="prod-stock">${p.stock} ${p.unit} left</div>`:''}</button>`;
+}
+
+function renderCart(){
+  const s=shop();const sub=cartSubtotal();const gst=cartGST();const total=cartTotal();const hasItems=state.cart.length>0;
+  return`<div class="billing-right">
+    <div class="cart-head"><h3>Current Bill${state.selectedTable!=null?' · Table '+s.tables[state.selectedTable].num:''}</h3></div>
+    <div class="cart-customer"><input class="form-input" id="cust-name" placeholder="Customer name (optional)" style="font-size:12px"></div>
+    <div class="cart-items">${state.cart.length?state.cart.map(i=>`<div class="cart-row"><div class="cart-name">${i.name}</div><div class="qty-ctrl"><button class="qty-btn" onclick="changeCartQty('${i.id}',-1)">−</button><div class="qty-num">${i.qty}</div><button class="qty-btn" onclick="changeCartQty('${i.id}',1)">+</button></div><div class="cart-price">${fmt(i.price*i.qty)}</div></div>`).join(''):'<div class="cart-empty">Add items from the left →</div>'}</div>
+    <div class="cart-summary">
+      <div class="sum-row"><span>Subtotal</span><span>${fmt(sub)}</span></div>
+      ${s.gst>0?`<div class="sum-row"><span>GST (${s.gst}%)</span><span>${fmt(gst)}</span></div>`:''}
+      <div class="sum-total"><span>Total</span><span>${fmt(total)}</span></div>
+    </div>
+    <div class="cart-actions">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <button class="btn btn-primary" onclick="settleBill('cash')" ${!hasItems?'disabled style="opacity:.5;cursor:not-allowed"':''}>💵 Cash</button>
+        <button class="btn btn-primary" style="background:#3B6D11" onclick="settleBill('upi')" ${!hasItems?'disabled style="opacity:.5;cursor:not-allowed"':''}>📱 UPI</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <button class="btn btn-secondary" onclick="settleBill('card')" ${!hasItems?'disabled style="opacity:.5;cursor:not-allowed"':''}>💳 Card</button>
+        <button class="btn btn-secondary" style="color:var(--amber);border-color:rgba(133,79,11,.3)" onclick="showKhataSettle()" ${!hasItems?'disabled style="opacity:.5;cursor:not-allowed"':''}>📒 Khata</button>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCart()">Clear Cart</button>
+    </div>
+  </div>`;
+}
+
+// ── INVENTORY ─────────────────────────────────────────
+function renderInventory(){
+  const s=shop();const catList=cats();
+  return`<div class="page-header"><div><h2>Products & Inventory</h2><p>${s.products.length} products · ${catList.length} categories</p></div><div class="header-actions"><button class="btn btn-primary" onclick="showAddProduct()">+ Add Product</button></div></div>
+  <div class="page-body">
+    ${catList.length?catList.map(cat=>{
+      const prods=s.products.filter(p=>p.cat===cat);
+      return`<div style="margin-bottom:20px"><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">${cat} <span style="font-weight:400;color:var(--text3)">(${prods.length})</span></div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Unit</th><th>Status</th><th style="width:80px"></th></tr></thead>
+        <tbody>${prods.map(p=>{
+          const pct=p.stock!=null?Math.min(100,(p.stock/Math.max(p.stock,50))*100):null;
+          const cls=pct!=null?(pct<=10?'crit':pct<=30?'warn':''):'';
+          return`<tr><td style="font-weight:500">${p.name}</td><td>${fmt(p.price)}</td>
+            <td style="min-width:80px">${p.stock!=null?`<div>${p.stock}</div><div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct||0}%"></div></div>`:'∞ Unlimited'}</td>
+            <td>${p.unit||'pcs'}</td>
+            <td>${p.stock===0?'<span class="badge badge-red">Out of Stock</span>':p.stock!=null&&p.stock<=5?'<span class="badge badge-amber">Low Stock</span>':'<span class="badge badge-green">Available</span>'}</td>
+            <td style="display:flex;gap:4px"><button class="btn-icon" onclick="showEditProduct('${p.id}')" title="Edit">✏️</button><button class="btn-icon" onclick="deleteProduct('${p.id}')" title="Delete">🗑️</button></td>
+          </tr>`;
+        }).join('')}</tbody></table></div></div>`;
+    }).join(''):`<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:48px;margin-bottom:16px">📦</div><p style="font-size:15px;margin-bottom:16px">No products yet.</p><button class="btn btn-primary" onclick="showAddProduct()">Add Your First Product</button></div>`}
+  </div>`;
+}
+
+// ── KHATA ─────────────────────────────────────────────
+function renderKhata(){
+  const entries=state.khataEntries.filter(k=>k.shop===state.currentShop);
+  const pending=entries.filter(k=>!k.paid);
+  const totalPending=pending.reduce((s,k)=>s+k.amount,0);
+  return`<div class="page-header"><div><h2>Khata / Credit Book</h2><p>${pending.length} pending · ${fmt(totalPending)} owed to you</p></div><div class="header-actions"><button class="btn btn-primary" onclick="showAddKhata()">+ Add Entry</button></div></div>
+  <div class="page-body">
+    ${pending.length?`<div class="khata-grid">${pending.map(k=>`<div class="khata-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div><div style="font-size:14px;font-weight:600">${k.name}</div><div style="font-size:12px;color:var(--text3)">${k.phone||'No phone'}</div></div>
+        <span class="badge badge-red">Pending</span>
+      </div>
+      <div style="font-size:22px;font-weight:700;color:var(--red)">${fmt(k.amount)}</div>
+      ${k.note?`<div style="font-size:12px;color:var(--text3);margin-top:6px">${k.note}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:10px;align-items:center">
+        <button class="btn btn-sm btn-green" onclick="markKhataPaid('${k.id}')">✓ Mark Paid</button>
+        <span style="font-size:11px;color:var(--text3)">${new Date(k.date).toLocaleDateString('en-IN')}</span>
+      </div>
+    </div>`).join('')}</div>`:`<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:48px;margin-bottom:16px">📒</div><p>No pending khata entries.</p></div>`}
+    ${entries.filter(k=>k.paid).length?`<div style="margin-top:20px"><div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Settled</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Customer</th><th>Phone</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>${entries.filter(k=>k.paid).map(k=>`<tr><td style="font-weight:500">${k.name}</td><td>${k.phone||'—'}</td><td>${fmt(k.amount)}</td><td>${new Date(k.date).toLocaleDateString('en-IN')}</td><td><span class="badge badge-green">Paid</span></td></tr>`).join('')}</tbody></table></div></div>`:``}
+  </div>`;
+}
+
+// ── BILL HISTORY ──────────────────────────────────────
+function renderBillHistory(){
+  const bills=state.bills.filter(b=>b.shop===state.currentShop).reverse();
+  const total=bills.reduce((s,b)=>s+b.total,0);
+  return`<div class="page-header"><div><h2>Bill History</h2><p>${bills.length} bills · ${fmt(total)} total revenue</p></div></div>
+  <div class="page-body">
+    ${bills.length?`<div class="table-wrap"><table class="data-table"><thead><tr><th>Bill #</th><th>Items</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Payment</th><th>Time</th><th></th></tr></thead>
+    <tbody>${bills.map(b=>`<tr><td style="font-family:monospace;font-size:12px;font-weight:600">#${b.id.slice(0,6).toUpperCase()}</td><td>${b.items.length}</td><td>${fmt(b.subtotal)}</td><td>${fmt(b.gst)}</td><td style="font-weight:700">${fmt(b.total)}</td><td><span class="badge badge-blue">${b.payMode.toUpperCase()}</span></td><td style="font-size:12px;color:var(--text3)">${new Date(b.time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</td><td><button class="btn btn-sm btn-secondary" onclick="showReceipt('${b.id}')">Receipt</button></td></tr>`).join('')}</tbody>
+    </table></div>`:`<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:48px;margin-bottom:16px">📋</div><p>No bills yet. Start billing from the Billing tab.</p></div>`}
+  </div>`;
+}
+
+// ── SETTINGS ──────────────────────────────────────────
+function renderSettings(){
+  const s=shop();
+  return`<div class="page-header"><div><h2>Settings</h2><p>Configure ${s.name}</p></div></div>
+  <div class="page-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:640px">
+      <div class="table-wrap" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Shop Details</div>
+        <div class="form-group"><label class="form-label">Shop Name</label><input class="form-input" id="set-name" value="${s.name}"></div>
+        <div class="form-group"><label class="form-label">GST %</label><input class="form-input" id="set-gst" type="number" value="${s.gst}" min="0" max="28"></div>
+        <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save Changes</button>
+      </div>
+      <div class="table-wrap" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Shop Info</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Type</span><span>${SHOP_TEMPLATES[s.type]?.label||s.type}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Billing Mode</span><span style="text-transform:capitalize">${s.mode}</span></div>
+          ${s.mode==='table'?`<div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Tables</span><span>${s.tables.length}</span></div>`:''}
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Products</span><span>${s.products.length}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Total Bills</span><span>${state.bills.filter(b=>b.shop===s.id).length}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Shop ID</span><span style="font-family:monospace;font-size:11px;color:var(--text3)">${s.id}</span></div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+          <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete this shop? All data will be lost.'))deleteShop()">Delete Shop</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function saveSettings(){const s=shop();s.name=document.getElementById('set-name').value||s.name;s.gst=parseFloat(document.getElementById('set-gst').value)||0;saveState();render();toast('Settings saved')}
+function deleteShop(){const id=state.currentShop;state.shops=state.shops.filter(s=>s.id!==id);state.bills=state.bills.filter(b=>b.shop!==id);state.khataEntries=state.khataEntries.filter(k=>k.shop!==id);state.currentShop=state.shops[0]?.id||null;state.currentPage='dashboard';saveState();render();toast('Shop deleted')}
+
+// ── MODALS ────────────────────────────────────────────
+function renderModal(){
+  const m=state.modal;if(!m)return;
+  const map={
+    'add-product':()=>renderProductModal(m.product),
+    'add-khata':renderKhataModal,
+    'receipt':()=>renderReceiptModal(m.bill),
+    'add-shop':renderAddShopModal,
+    'khata-settle':renderKhataSettleModal
+  };
+  const content=(map[m.type]||(() => ''))();
+  const div=document.createElement('div');
+  div.className='modal-overlay';
+  div.onclick=e=>{if(e.target===div)closeModal()};
+  div.innerHTML=content;
+  document.body.appendChild(div);
+}
+
+function closeModal(){state.modal=null;document.querySelectorAll('.modal-overlay').forEach(e=>e.remove())}
+
+function renderProductModal(ed=null){
+  const s=shop();
+  const catOpts=s.cats.map(c=>`<option value="${c}" ${ed?.cat===c?'selected':''}>${c}</option>`).join('');
+  return`<div class="modal"><div class="modal-head"><h3>${ed?'Edit':'Add'} Product</h3><button class="btn-icon" onclick="closeModal()">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Product Name</label><input class="form-input" id="p-name" placeholder="e.g. Masala Tea" value="${ed?.name||''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Price (₹)</label><input class="form-input" id="p-price" type="number" min="0" step="0.01" placeholder="0.00" value="${ed?.price||''}"></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-input" id="p-cat" onchange="document.getElementById('newcat-wrap').style.display=this.value==='__new'?'':'none'">${catOpts}<option value="__new">+ New Category</option></select>
+      </div>
+    </div>
+    <div id="newcat-wrap" style="display:none" class="form-group"><label class="form-label">New Category Name</label><input class="form-input" id="p-newcat" placeholder="Category name"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Stock Qty <span style="color:var(--text3)">(blank = unlimited)</span></label><input class="form-input" id="p-stock" type="number" min="0" placeholder="Leave blank for unlimited" value="${ed?.stock!=null?ed.stock:''}"></div>
+      <div class="form-group"><label class="form-label">Unit</label>
+        <select class="form-input" id="p-unit">
+          ${['pcs','kg','g','L','ml','box','packet','m','dozen'].map(u=>`<option ${ed?.unit===u?'selected':''}>${u}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitProduct(${ed?`'${ed.id}'`:null})">${ed?'Save Changes':'Add Product'}</button></div>
+  </div>`;
+}
+
+function renderKhataModal(){
+  return`<div class="modal"><div class="modal-head"><h3>Add Khata Entry</h3><button class="btn-icon" onclick="closeModal()">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Customer Name</label><input class="form-input" id="k-name" placeholder="Customer name"></div>
+    <div class="form-group"><label class="form-label">Phone Number (optional)</label><input class="form-input" id="k-phone" placeholder="e.g. 9876543210"></div>
+    <div class="form-group"><label class="form-label">Amount Owed (₹)</label><input class="form-input" id="k-amt" type="number" min="0" placeholder="0.00"></div>
+    <div class="form-group"><label class="form-label">Note</label><input class="form-input" id="k-note" placeholder="e.g. Monthly grocery credit"></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitKhata()">Add Entry</button></div>
+  </div>`;
+}
+
+function renderKhataSettleModal(){
+  return`<div class="modal"><div class="modal-head"><h3>Bill to Khata</h3><button class="btn-icon" onclick="closeModal()">✕</button></div>
+  <div class="modal-body">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Record bill of <strong>${fmt(cartTotal())}</strong> as credit for this customer.</p>
+    <div class="form-group"><label class="form-label">Customer Name</label><input class="form-input" id="kh-name" placeholder="Customer name"></div>
+    <div class="form-group"><label class="form-label">Phone (optional)</label><input class="form-input" id="kh-phone" placeholder="Phone number"></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" style="background:var(--amber)" onclick="submitKhataSettle()">Add to Khata</button></div>
+  </div>`;
+}
+
+function renderReceiptModal(bill){
+  const s=state.shops.find(x=>x.id===bill.shop);
+  return`<div class="modal"><div class="modal-head"><h3>Receipt</h3><button class="btn-icon" onclick="closeModal()">✕</button></div>
+  <div class="modal-body"><div class="receipt">
+    <div class="receipt-header">
+      <div class="receipt-shop">${s?.name||'Shop'}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">${new Date(bill.time).toLocaleString('en-IN')}</div>
+      <div style="font-size:11px;color:var(--text3)">Bill No: #${bill.id.slice(0,6).toUpperCase()}</div>
+      ${bill.table!=null?`<div style="font-size:11px;color:var(--text3)">Table: ${s.tables[bill.table]?.num}</div>`:''}
+    </div>
+    <table style="width:100%;font-size:13px;border-collapse:collapse">
+      <thead><tr><td style="padding:4px 0;font-weight:600;border-bottom:1px solid var(--border)">Item</td><td style="text-align:center;font-weight:600;border-bottom:1px solid var(--border)">Qty</td><td style="text-align:right;font-weight:600;border-bottom:1px solid var(--border)">Amt</td></tr></thead>
+      <tbody>${bill.items.map(i=>`<tr><td style="padding:5px 0;padding-right:8px">${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right;font-weight:600">${fmt(i.price*i.qty)}</td></tr>`).join('')}</tbody>
+    </table>
+    <div style="border-top:1px dashed var(--border-md);margin-top:10px;padding-top:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px"><span>Subtotal</span><span>${fmt(bill.subtotal)}</span></div>
+      ${bill.gst>0?`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px"><span>GST</span><span>${fmt(bill.gst)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;margin-top:6px"><span>Total</span><span>${fmt(bill.total)}</span></div>
+      <div style="text-align:center;margin-top:8px"><span class="badge badge-blue">${bill.payMode.toUpperCase()}</span></div>
+    </div>
+    <div class="receipt-footer">Thank you! Visit again. 🙏</div>
+  </div></div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-primary" onclick="window.print()">🖨️ Print</button></div>
+  </div>`;
+}
+
+function renderAddShopModal(){
+  return`<div class="modal"><div class="modal-head"><h3>Add New Shop</h3><button class="btn-icon" onclick="closeModal()">✕</button></div><div class="modal-body">${renderShopFormInner()}</div></div>`;
+}
+
+// ── MODAL SUBMITS ─────────────────────────────────────
+function submitProduct(editId=null){
+  const name=document.getElementById('p-name')?.value.trim();
+  const price=document.getElementById('p-price')?.value;
+  let cat=document.getElementById('p-cat')?.value;
+  const newcat=document.getElementById('p-newcat')?.value.trim();
+  if(cat==='__new'){if(!newcat){toast('Enter a category name');return}cat=newcat}
+  if(!name||!price){toast('Fill in name and price');return}
+  if(editId){
+    const p=shop().products.find(x=>x.id===editId);
+    if(p){p.name=name;p.price=parseFloat(price);p.cat=cat;p.stock=document.getElementById('p-stock')?.value?parseInt(document.getElementById('p-stock').value):null;p.unit=document.getElementById('p-unit')?.value;if(!shop().cats.includes(cat))shop().cats.push(cat)}
+    closeModal();saveState();render();toast('Product updated');
+  }else{
+    addProduct({name,price,cat,stock:document.getElementById('p-stock')?.value,unit:document.getElementById('p-unit')?.value});
+    closeModal();
+  }
+}
+
+function submitKhata(){
+  const name=document.getElementById('k-name')?.value.trim();
+  const amt=document.getElementById('k-amt')?.value;
+  if(!name||!amt){toast('Fill in name and amount');return}
+  addKhata({name,phone:document.getElementById('k-phone')?.value,amount:amt,note:document.getElementById('k-note')?.value});
+}
+
+function submitKhataSettle(){
+  const name=document.getElementById('kh-name')?.value.trim();
+  if(!name){toast('Enter customer name');return}
+  addKhata({name,phone:document.getElementById('kh-phone')?.value,amount:cartTotal(),note:'Bill credit - '+new Date().toLocaleDateString('en-IN')});
+  clearCart();closeModal();toast('Added to khata');
+}
+
+// ── SHOW MODALS ───────────────────────────────────────
+function showAddProduct(){state.modal={type:'add-product'};render()}
+function showEditProduct(id){const p=shop().products.find(x=>x.id===id);state.modal={type:'add-product',product:p};render()}
+function showAddKhata(){state.modal={type:'add-khata'};render()}
+function showKhataSettle(){state.modal={type:'khata-settle'};render()}
+function showAddShop(){state.modal={type:'add-shop'};_selType=null;render()}
+function showReceipt(billId){const b=state.bills.find(x=>x.id===billId);if(b){state.modal={type:'receipt',bill:b};render()}}
+
+// ── HELPERS ───────────────────────────────────────────
+function selectTable(idx){
+  const s=shop();
+  state.selectedTable=idx;
+  state.cart=s.tables[idx].order?[...s.tables[idx].order]:[];
+  s.tables[idx].status='occupied';
+  render();
+}
+function selectCat(cat){state.activeCat=cat;render()}
+function switchShop(id){state.currentShop=id;state.cart=[];state.selectedTable=null;state.activeCat=null;saveState();render()}
+function bindNav(){document.querySelectorAll('.nav-item[data-page]').forEach(btn=>{btn.onclick=()=>{state.currentPage=btn.dataset.page;state.activeCat=null;render()}})}
+
+// ── SEED DATA (Demo shops with realistic data) ────────
+function seedDemo(){
+  const uid2=()=>Math.random().toString(36).slice(2,9);
+  const cafe={id:uid2(),name:"Murugan Tea Stall",type:"cafe",mode:"counter",gst:5,cats:["Hot Drinks","Cold Drinks","Snacks","Bakery"],products:[
+    {id:uid2(),name:"Masala Chai",price:15,cat:"Hot Drinks",stock:200,unit:"cups"},
+    {id:uid2(),name:"Filter Coffee",price:20,cat:"Hot Drinks",stock:150,unit:"cups"},
+    {id:uid2(),name:"Lemon Tea",price:18,cat:"Hot Drinks",stock:120,unit:"cups"},
+    {id:uid2(),name:"Ginger Tea",price:20,cat:"Hot Drinks",stock:100,unit:"cups"},
+    {id:uid2(),name:"Cold Coffee",price:45,cat:"Cold Drinks",stock:40,unit:"cups"},
+    {id:uid2(),name:"Lassi",price:35,cat:"Cold Drinks",stock:30,unit:"cups"},
+    {id:uid2(),name:"Lemon Juice",price:30,cat:"Cold Drinks",stock:25,unit:"cups"},
+    {id:uid2(),name:"Samosa",price:12,cat:"Snacks",stock:50,unit:"pcs"},
+    {id:uid2(),name:"Vada",price:10,cat:"Snacks",stock:4,unit:"pcs"},
+    {id:uid2(),name:"Biscuits (Parle-G)",price:10,cat:"Snacks",stock:60,unit:"pcs"},
+    {id:uid2(),name:"Bread Omelette",price:40,cat:"Bakery",stock:null,unit:"pcs"},
+    {id:uid2(),name:"Pav Bhaji",price:50,cat:"Bakery",stock:null,unit:"pcs"},
+  ],tables:[]};
+
+  const hardware={id:uid2(),name:"Rajan Hardware",type:"hardware",mode:"counter",gst:12,cats:["Pipes & Fittings","Electrical","Tools","Paint","Fasteners"],products:[
+    {id:uid2(),name:'PVC Pipe 1"',price:85,cat:"Pipes & Fittings",stock:120,unit:"pcs"},
+    {id:uid2(),name:"PVC Elbow 1\"",price:15,cat:"Pipes & Fittings",stock:200,unit:"pcs"},
+    {id:uid2(),name:"Ball Valve 1\"",price:180,cat:"Pipes & Fittings",stock:30,unit:"pcs"},
+    {id:uid2(),name:"Wire 2.5mm (per m)",price:22,cat:"Electrical",stock:3,unit:"m"},
+    {id:uid2(),name:"MCB Switch 16A",price:120,cat:"Electrical",stock:20,unit:"pcs"},
+    {id:uid2(),name:"Switch Board 3-pin",price:65,cat:"Electrical",stock:25,unit:"pcs"},
+    {id:uid2(),name:"Hammer 500g",price:180,cat:"Tools",stock:15,unit:"pcs"},
+    {id:uid2(),name:"Drill Bit Set",price:350,cat:"Tools",stock:8,unit:"set"},
+    {id:uid2(),name:"Screwdriver Set",price:220,cat:"Tools",stock:12,unit:"set"},
+    {id:uid2(),name:"Asian Paints 1L",price:320,cat:"Paint",stock:8,unit:"L"},
+    {id:uid2(),name:"Primer 1L",price:180,cat:"Paint",stock:10,unit:"L"},
+    {id:uid2(),name:"M6 Bolt (per 10)",price:25,cat:"Fasteners",stock:500,unit:"pcs"},
+    {id:uid2(),name:"M6 Nut (per 10)",price:15,cat:"Fasteners",stock:2,unit:"pcs"},
+  ],tables:[]};
+
+  const restaurant={id:uid2(),name:"Annapoorna Restaurant",type:"restaurant",mode:"table",gst:5,cats:["Starters","Mains","Breads","Rice","Beverages","Desserts"],products:[
+    {id:uid2(),name:"Sambar Vada",price:60,cat:"Starters",stock:null,unit:"pcs"},
+    {id:uid2(),name:"Paneer Tikka",price:180,cat:"Starters",stock:null,unit:"plate"},
+    {id:uid2(),name:"Gobi Manchurian",price:150,cat:"Starters",stock:null,unit:"plate"},
+    {id:uid2(),name:"Dal Makhani",price:160,cat:"Mains",stock:null,unit:"bowl"},
+    {id:uid2(),name:"Paneer Butter Masala",price:200,cat:"Mains",stock:null,unit:"bowl"},
+    {id:uid2(),name:"Chicken Curry",price:240,cat:"Mains",stock:null,unit:"bowl"},
+    {id:uid2(),name:"Fish Fry",price:280,cat:"Mains",stock:null,unit:"plate"},
+    {id:uid2(),name:"Butter Naan",price:40,cat:"Breads",stock:null,unit:"pcs"},
+    {id:uid2(),name:"Tandoori Roti",price:30,cat:"Breads",stock:null,unit:"pcs"},
+    {id:uid2(),name:"Paratha",price:50,cat:"Breads",stock:null,unit:"pcs"},
+    {id:uid2(),name:"Veg Fried Rice",price:140,cat:"Rice",stock:null,unit:"plate"},
+    {id:uid2(),name:"Chicken Biryani",price:280,cat:"Rice",stock:null,unit:"plate"},
+    {id:uid2(),name:"Curd Rice",price:80,cat:"Rice",stock:null,unit:"plate"},
+    {id:uid2(),name:"Lassi",price:80,cat:"Beverages",stock:null,unit:"glass"},
+    {id:uid2(),name:"Masala Chai",price:30,cat:"Beverages",stock:null,unit:"cup"},
+    {id:uid2(),name:"Soft Drink",price:60,cat:"Beverages",stock:30,unit:"can"},
+    {id:uid2(),name:"Gulab Jamun",price:80,cat:"Desserts",stock:null,unit:"plate"},
+    {id:uid2(),name:"Ice Cream",price:100,cat:"Desserts",stock:null,unit:"scoop"},
+  ],tables:Array.from({length:10},(_,i)=>({num:i+1,status:'free',order:[]}))};
+
+  const grocery={id:uid2(),name:"Lakshmi Stores",type:"grocery",mode:"counter",gst:0,cats:["Vegetables","Fruits","Staples","Dairy","Spices","Household"],products:[
+    {id:uid2(),name:"Tomato",price:40,cat:"Vegetables",stock:50,unit:"kg"},
+    {id:uid2(),name:"Onion",price:35,cat:"Vegetables",stock:80,unit:"kg"},
+    {id:uid2(),name:"Potato",price:30,cat:"Vegetables",stock:100,unit:"kg"},
+    {id:uid2(),name:"Banana (dozen)",price:40,cat:"Fruits",stock:20,unit:"dozen"},
+    {id:uid2(),name:"Rice (per kg)",price:55,cat:"Staples",stock:200,unit:"kg"},
+    {id:uid2(),name:"Atta 1kg",price:45,cat:"Staples",stock:3,unit:"kg"},
+    {id:uid2(),name:"Toor Dal 1kg",price:120,cat:"Staples",stock:30,unit:"kg"},
+    {id:uid2(),name:"Milk 500ml",price:28,cat:"Dairy",stock:40,unit:"pcs"},
+    {id:uid2(),name:"Curd 200g",price:25,cat:"Dairy",stock:20,unit:"pcs"},
+    {id:uid2(),name:"Turmeric 100g",price:30,cat:"Spices",stock:15,unit:"pcs"},
+    {id:uid2(),name:"Red Chilli 100g",price:35,cat:"Spices",stock:12,unit:"pcs"},
+    {id:uid2(),name:"Detergent 500g",price:55,cat:"Household",stock:25,unit:"pcs"},
+  ],tables:[]};
+
+  state.shops=[cafe,hardware,restaurant,grocery];
+  state.currentShop=cafe.id;
+
+  // Seed some sample bills for the cafe
+  const now=new Date();
+  [
+    [{name:"Masala Chai",price:15,qty:3,id:cafe.products[0].id,cat:"Hot Drinks",stock:200,unit:"cups"},{name:"Samosa",price:12,qty:2,id:cafe.products[7].id,cat:"Snacks",stock:50,unit:"pcs"}],
+    [{name:"Filter Coffee",price:20,qty:2,id:cafe.products[1].id,cat:"Hot Drinks",stock:150,unit:"cups"},{name:"Biscuits (Parle-G)",price:10,qty:1,id:cafe.products[9].id,cat:"Snacks",stock:60,unit:"pcs"}],
+    [{name:"Cold Coffee",price:45,qty:1,id:cafe.products[4].id,cat:"Cold Drinks",stock:40,unit:"cups"},{name:"Vada",price:10,qty:2,id:cafe.products[8].id,cat:"Snacks",stock:4,unit:"pcs"}],
+  ].forEach((items,i)=>{
+    const sub=items.reduce((s,x)=>s+x.price*x.qty,0);
+    const g=Math.round(sub*5/100*100)/100;
+    state.bills.push({id:uid2(),shop:cafe.id,shopName:cafe.name,items,subtotal:sub,gst:g,total:sub+g,payMode:['cash','upi','cash'][i],table:null,time:new Date(now-i*3600000).toISOString()});
+  });
+
+  // Seed khata entries
+  state.khataEntries=[
+    {id:uid2(),shop:cafe.id,name:"Ravi Kumar",phone:"9876543210",amount:150,note:"Weekly tea tab",date:new Date(now-86400000).toISOString(),paid:false},
+    {id:uid2(),shop:hardware.id,name:"Suresh Babu",phone:"9123456789",amount:2800,note:"Plumbing materials",date:new Date(now-172800000).toISOString(),paid:false},
+    {id:uid2(),shop:grocery.id,name:"Meena Devi",phone:"",amount:480,note:"Monthly groceries",date:new Date(now-259200000).toISOString(),paid:true},
+  ];
+}
+
+// ── INIT ──────────────────────────────────────────────
+loadState();
+if(!state.shops.length)seedDemo();
+render();
+</script>
+</body>
+</html>
